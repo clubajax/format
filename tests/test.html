@@ -5,7 +5,7 @@
     <title>Test Format</title>
     <meta charset="utf-8">
     <script src="src/test-files.js"></script>
-    <script src="../index.js"></script>
+    <script src="../format.js"></script>
     <!-- <script src="//localhost:35750/livereload.js"></script> -->
 
     <style>
@@ -34,90 +34,150 @@
         describe('format', function () {
             this.timeout(3000);
             const describe = window.describe,
-                test = window.test,
                 expect = chai.expect,
                 formatters = window.formatters;
+
+            function test(format, input, output) {
+                const value = format(input);
+                console.log(value, typeof value);
+                expect(value).to.equal(output);
+            }
 
             describe('formatters', () => {
                 it('should format integers', () => {
                     const toHtml = formatters.integer.toHtml;
                     const from = formatters.integer.from;
-                    expect(toHtml('a1')).to.equal('1');
-                    expect(toHtml('1.1')).to.equal('1');
-                    expect(toHtml('1.0')).to.equal('1');
-                    expect(toHtml('-1.0')).to.equal('-1');
-                    
-                    expect(from('a1')).to.equal('1');
+
+                    test(toHtml, 'a1', '1');
+                    test(toHtml, '1.1', '1');
+                    test(toHtml, '1.0', '1');
+                    test(toHtml, '-1.0', '-1');
+
+
+                    test(from, 'a99', 99);
+                    test(from, '-1.0', -1);
+                    test(from, '', 0);
+                    test(from, ' ', 0);
+
+                });
+
+                it('should format numbers', () => {
+                    const toHtml = formatters.number.toHtml;
+                    const from = formatters.number.from;
+
+                    test(toHtml, 'a1', '1');
+                    test(toHtml, '1.1', '1.1');
+                    test(toHtml, '1.0', '1.0');
+                    test(toHtml, '-1.0', '-1.0');
+
+
+                    test(toHtml, '1.000000', '1.00');
+                    test(toHtml, '10000', '10000');
+                    test(toHtml, '.00001', '0.00001');
+                    test(toHtml, '.0000100000', '0.00001');
+
+                    test(from, 'a99', 99);
+                    test(from, '-1.0', -1);
+                    test(from, '-1.01', -1.01);
+                    test(from, '.01', 0.01);
+
+                    test(from, '', 0);
+                    test(from, ' ', 0);
+
                 });
 
                 it('should format percentages', () => {
                     const toHtml = formatters.percentage.toHtml;
                     const from = formatters.percentage.from;
-                    expect(toHtml('1')).to.equal('1%');
-                    expect(toHtml('01')).to.equal('1%');
-                    expect(toHtml('001')).to.equal('1%');
-                    expect(toHtml('a1')).to.equal('1%');
-                    expect(toHtml('1.1')).to.equal('1.1%');
-                    expect(toHtml('1.0')).to.equal('1.0%');
-                    expect(toHtml('1.00')).to.equal('1.00%');
-                    expect(toHtml('1.000')).to.equal('1.000%');
-                    expect(toHtml('-1.0')).to.equal('-1.0%');
-                    
-                    expect(from('1%')).to.equal('1');
-                    expect(from('1.1%')).to.equal('1.1');
-                    expect(from('1.00%')).to.equal('1.00');
-                    expect(from('-10%')).to.equal('-10');
+
+                    test(toHtml, '0.10', '0.10%');
+                    test(toHtml, '000.01', '0.01%');
+                    test(toHtml, '0.001', '0.001%');
+                    test(toHtml, '0.100', '0.10%');
+                    test(toHtml, '000000.10000000', '0.10%');
+
+                    test(toHtml, '1', '1%');
+                    test(toHtml, '01', '1%');
+                    test(toHtml, '001', '1%');
+                    test(toHtml, 'a1', '1%');
+                    test(toHtml, '1.1', '1.1%');
+                    test(toHtml,'1.0', '1.0%');
+                    test(toHtml, '1.00', '1.00%');
+                    test(toHtml, '1.000', '1.00%');
+                    test(toHtml, '-1.0', '-1.0%');
+
+                    test(from, '1%', 1);
+                    test(from, '0.01%', .01);
+                    test(from, '1.1%', 1.1);
+                    test(from, '1.00%', 1.0);
+                    test(from, '-10%', -10);
+
+                    test(from, '', 0);
+                    test(from, ' ', 0);
                 });
 
                 it('should format currency', () => {
                     const toHtml = formatters.currency.toHtml;
                     const from = formatters.currency.from;
-                    expect(toHtml('1')).to.equal('$1.00');
-                    expect(toHtml('1.001')).to.equal('$1.00');
-                    expect(toHtml('1.01')).to.equal('$1.01');
-                    expect(toHtml('1.009')).to.equal('$1.01');
-                    expect(toHtml('-1')).to.equal('-$1.00');
-                    expect(toHtml('.01')).to.equal('$0.01');
-                    expect(toHtml('0.01')).to.equal('$0.01');
+                    test(toHtml, '1', '$1.00');
+                    test(toHtml, '1.001', '$1.00');
+                    test(toHtml, '1.01', '$1.01');
+                    test(toHtml, '1.009', '$1.01');
+                    test(toHtml, '-1', '-$1.00');
+                    test(toHtml, '.01', '$0.01');
+                    test(toHtml, '0.01', '$0.01');
 
-                    expect(toHtml('10')).to.equal('$10.00');
-                    expect(toHtml('100')).to.equal('$100.00');
-                    expect(toHtml('1000')).to.equal('$1,000.00');
-                    expect(toHtml('10000.00')).to.equal('$10,000.00');
-                    
-                    expect(toHtml('-10')).to.equal('-$10.00');
-                    expect(toHtml('-100')).to.equal('-$100.00');
-                    expect(toHtml('-1000')).to.equal('-$1,000.00');
-                    expect(toHtml('-10000.00')).to.equal('-$10,000.00');
+                    test(toHtml, '10', '$10.00');
+                    test(toHtml, '100', '$100.00');
+                    test(toHtml, '1000', '$1,000.00');
+                    test(toHtml, '10000.00', '$10,000.00');
 
-                    expect(from('$1')).to.equal('1');
-                    expect(from('$1.00')).to.equal('1.00');
-                    expect(from('-$1.00')).to.equal('-1.00');
+                    test(toHtml, '-10', '-$10.00');
+                    test(toHtml, '-100', '-$100.00');
+                    test(toHtml, '-1000', '-$1,000.00');
+                    test(toHtml, '-10000.00', '-$10,000.00');
+
+                    test(from, '$1', 1);
+                    test(from, '$1.00', 1);
+                    test(from, '-$1.00', -1);
+                    test(from, '-$1.51', -1.51);
+                    test(from, '-$1.50', -1.5);
+                    test(from, '-$0.01', -0.01);
+                    test(from, '$0.01', 0.01);
+                    test(from, '$0.51', 0.51);
+
+                    test(from, '', 0);
+                    test(from, ' ', 0);
                 });
 
                 it('should format accounting', () => {
                     const toHtml = formatters.accounting.toHtml;
                     const from = formatters.accounting.from;
-                    expect(toHtml('1')).to.equal('$1.00');
-                    expect(toHtml('1.001')).to.equal('$1.00');
-                    expect(toHtml('1.01')).to.equal('$1.01');
-                    expect(toHtml('1.009')).to.equal('$1.01');
-                    expect(toHtml('-1')).to.equal('($1.00)');
-                    expect(toHtml('.01')).to.equal('$0.01');
-                    expect(toHtml('0.01')).to.equal('$0.01');
+                    test(toHtml, '1', '$1.00');
+                    test(toHtml, '1.001', '$1.00');
+                    test(toHtml, '1.01', '$1.01');
+                    test(toHtml, '1.009', '$1.01');
+                    test(toHtml, '-1', '($1.00)');
+                    test(toHtml, '.01', '$0.01');
+                    test(toHtml, '0.01', '$0.01');
 
-                    expect(toHtml('1000')).to.equal('$1,000.00');
-                    expect(toHtml('10000.00')).to.equal('$10,000.00');
-                    
-                    expect(toHtml('-10')).to.equal('($10.00)');
-                    expect(toHtml('-100')).to.equal('($100.00)');
-                    expect(toHtml('-1000')).to.equal('($1,000.00)');
-                    expect(toHtml('-10000.00')).to.equal('($10,000.00)');
+                    test(toHtml, '1000', '$1,000.00');
+                    test(toHtml, '10000.00', '$10,000.00');
 
-                    expect(from('$1')).to.equal('1');
-                    expect(from('$1.00')).to.equal('1.00');
-                    expect(from('-$1.00')).to.equal('-1.00');
-                    expect(from('($1.00)')).to.equal('-1.00');
+                    test(toHtml, '-10', '($10.00)');
+                    test(toHtml, '-100', '($100.00)');
+                    test(toHtml, '-1000', '($1,000.00)');
+                    test(toHtml, '-10000.00', '($10,000.00)');
+
+                    test(from, '$1', 1);
+                    test(from, '$1.00', 1);
+                    test(from, '-$1.00', -1);
+                    test(from, '($1.00)', -1);
+                    test(from, '-$1.01', -1.01);
+                    test(from, '($1.01)', -1.01);
+
+                    test(from, '', 0);
+                    test(from, ' ', 0);
                 });
 
                 it('should format phone', () => {
@@ -131,10 +191,6 @@
                     expect(from('(123) 456-7890')).to.equal('(123) 456-7890');
                 });
 
-                function test(format, input, output){
-                    console.log(format(input));
-                    expect(format(input)).to.equal(output);
-                }
                 it('should format titleCase', () => {
                     const toHtml = formatters.titleCase.toHtml;
                     const from = formatters.titleCase.from;
@@ -142,9 +198,25 @@
                     test(toHtml, 'mike is going downtown', 'Mike is Going Downtown');
                     test(toHtml, "i thiNk I won't do that now.", 'I Think I Won\'t do That Now.');
                     test(toHtml, "26 is the answer", '26 is the Answer');
-                    test(toHtml, "  a very bad no no ", 'A Very Bad No No');
-                    test(toHtml, "what is in the door to go to a no", 'What is in the Door to Go to a No');
+                    test(toHtml, "  a very bad no no ", 'A Very Bad no no');
+                    test(toHtml, "what is in the door to go to a no", 'What is in the Door to go to a no');
+                    test(toHtml, "p.o. box 123", 'P.O. Box 123');
+
+                    test(toHtml, 'the avg mph is 96', 'The Avg MPH is 96');
+
+
                     // console.log(toHtml('mike is going downtown'));
+                });
+
+                it('should format zipcode', () => {
+                    const toHtml = formatters.zipcode.toHtml;
+                    const from = formatters.zipcode.from;
+                    // test(toHtml, "12345", '12345');
+                    // test(toHtml, "1234", '1234');
+                    test(toHtml, "123456", '12345-6');
+                    test(toHtml, "123456789", '12345-6789');
+                    test(toHtml, "  12aa 34-567-89.1234 56 789", '12345-6789');
+                    test(toHtml, "123456789123456789", '12345-6789');
                 });
             });
         });

@@ -2,6 +2,7 @@
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
+        define([], factory);
     } else if (typeof module === 'object' && module.exports) {
         // Node. Does not work with strict CommonJS, but
         // only CommonJS-like environments that support module.exports,
@@ -27,9 +28,17 @@
         return chunks;
     }
 
-    function stripLeadingZeros(value) {
+    function stripExtraZeros(value) {
         while (value.length && value[0] === '0') {
             value = value.substring(1);
+        }
+
+        while (/\.\d\d0/.test(value) && /\d\d0$/.test(value)) {
+            value = value.substring(0, value.length - 1);
+        }
+
+        if (/^\./.test(value)) {
+            return `0${value}`;
         }
         return value;
     }
@@ -56,14 +65,14 @@
     }
 
     function toNumber(value) {
-        return value.toString().match(/\d/g).join('');
+        return (toString(value).match(/\d/g) || []).join('');
     }
 
     function toDecimal(value) {
         value = toString(value).replace('$', '');
         const result = value.match(/-*\d|\./g);
-        if (result) {
-            return stripLeadingZeros(result.join(''));
+        if (result !== null) {
+            return stripExtraZeros(result.join(''));
         }
         return '';
     }
@@ -73,19 +82,43 @@
         return `${value.substring(0, 1).toUpperCase()}${value.substring(1)}`;
     }
 
-    const shortWords = [
-        'a', 'for', 'so', 'an', 'in', 'the', 'and', 'nor', 'to', 'at', 'of', 'up', 'but', 'on', 'yet', 'by', 'or', 'is', 'do'
+    const words2 = 'ax, ex, ox, by, my, ok, ah, aw, eh, ha, he, hi, if, of, we, am, be, me, up, ad, do, go, an, ar, as, at, et, in, is, it, lo, no, on, so, to, us'.split(', ');
+    const words3 = [
+        'a', 'for', 'the', 'and', 'nor', 'but', 'yet'
     ];
+    const specWord = {
+        'po': 1,
+        'po.': 1,
+        'p.o.': 1
+    };
+    function isAbbr(word) {
+        return !/[aeiou]/.test(word);
+    }
+
     function toTitleCase(value) {
         return toString(value).toLowerCase().split(' ').map((word, i) => {
+            if (specWord[word] || isAbbr(word)) {
+                return word.toUpperCase();
+            }
             if (i === 0) {
                 return cap(word);
             }
-            if (shortWords.includes(word)) {
+            if (words2.includes(word) || words3.includes(word)) {
                 return word;
             }
+
+            // less than three uppercase?
+
             return cap(word);
         }).join(' ');
+    }
+
+    function toZipCode(value) {
+        value = toNumber(value);
+        if (value.length < 6) {
+            return value;
+        }
+        return `${value.substring(0, 5)}-${value.substring(5, 9)}`;
     }
 
     function toString(value) {
@@ -98,8 +131,8 @@
     const formatters = {
         accounting: {
             from(value) {
-                const isNeg = /^\(|^-/.test(value);
-                return (isNeg ? '-' : '') + toDecimal(value).replace('-', '');
+                const isNeg = /^\(/.test(value);
+                return parseFloat(toDecimal(value) || 0) * (isNeg ? -1 : 1);
             },
             to(value, isHtml) {
                 if (value === 0) {
@@ -120,7 +153,7 @@
         },
         currency: {
             from(value) {
-                return toDecimal(value);
+                return parseFloat(toDecimal(value) || 0);
             },
             to(value, isHtml) {
                 if (value === 0) {
@@ -137,7 +170,7 @@
         },
         percentage: {
             from(value) {
-                return toDecimal(value);
+                return parseFloat(toDecimal(value) || 0);
             },
             to(value, isHtml) {
                 if (value === 0) {
@@ -154,7 +187,7 @@
         },
         integer: {
             from(value) {
-                return formatters.integer.toHtml(value);
+                return parseInt(toDecimal(value) || 0, 10);
             },
             to(value, isHtml) {
                 if (value === 0) {
@@ -168,6 +201,25 @@
             },
             toHtml(value) {
                 return formatters.integer.to(value, true);
+            },
+        },
+        number: {
+            from(value) {
+                return parseFloat(toDecimal(value) || 0);
+            },
+            to(value, isHtml) {
+                if (value === 0) {
+                    return '0';
+                }
+                if (!value) {
+                    return isHtml ? SPACE : '';
+                }
+                const isNeg = /^-/.test(value);
+                return toDecimal(value);
+                // return (isNeg ? '-' : '') + toDecimal(value);
+            },
+            toHtml(value) {
+                return formatters.number.to(value, true);
             },
         },
         phone: {
@@ -198,15 +250,32 @@
                 return formatters.titleCase.to(value, true);
             }
         },
+        zipcode: {
+            from(value) {
+                return value;
+            },
+            to(value, isHtml) {
+                if (!value) {
+                    return isHtml ? SPACE : '';
+                }
+                return toZipCode(value);  
+            },
+            toHtml(value) {
+                return formatters.zipcode.to(value, true);
+            },
+        },
         default: {
             from(value) {
                 return value;
             },
-            to(value) {
+            to(value, isHtml) {
+                if (!value) {
+                    return isHtml ? SPACE : '';
+                }
                 return value;  
             },
             toHtml(value) {
-                return value;
+                return formatters.default.to(value, true);
             },
         },
     };
