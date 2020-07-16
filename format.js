@@ -60,8 +60,14 @@
     }
 
     function formatPhone(value) {
+        if (!value) {
+            return value;
+        }
         const n = toNumber(value);
-        return `(${n.substring(0, 3)}) ${n.substring(3, 6)}-${n.substring(6)}`;
+        if (n.length <= 12) {
+            return `(${n.substring(0, 3)}) ${n.substring(3, 6)}-${n.substring(6, 10)}`;
+        }
+        return `(${n.substring(0, 3)}) ${n.substring(3, 6)}-${n.substring(6, 10)} x${n.substring(10)}`;
     }
 
     function toNumber(value) {
@@ -75,6 +81,12 @@
             return stripExtraZeros(result.join(''));
         }
         return '';
+    }
+
+    function toFloat(value) {
+        value = parseFloat(value);
+        value = Math.round(value * 100) * .01;
+        return value.toFixed(2);
     }
 
     function cap(value) {
@@ -121,6 +133,22 @@
         return `${value.substring(0, 5)}-${value.substring(5, 9)}`;
     }
 
+    function toSSN(value) {
+        value = toNumber(value);
+        if (value.length < 9) {
+            return value;
+        }
+        return `${value.substring(0, 3)}-${value.substring(3, 5)}-${value.substring(5, 9)}`;
+    }
+
+    function toEIN(value) {
+        value = toNumber(value);
+        if (value.length < 9) {
+            return value;
+        }
+        return `${value.substring(0, 2)}-${value.substring(2, 9)}`;
+    }
+
     function toString(value) {
         if (value === null || value === undefined) {
             return '';
@@ -130,6 +158,7 @@
 
     const formatters = {
         accounting: {
+            name: 'accounting',
             from(value) {
                 const isNeg = /^\(/.test(value);
                 return parseFloat(toDecimal(value) || 0) * (isNeg ? -1 : 1);
@@ -152,6 +181,7 @@
             },
         },
         currency: {
+            name: 'currency',
             from(value) {
                 return parseFloat(toDecimal(value) || 0);
             },
@@ -169,23 +199,25 @@
             },
         },
         percentage: {
+            name: 'percentage',
             from(value) {
                 return parseFloat(toDecimal(value) || 0);
             },
             to(value, isHtml) {
-                if (value === 0) {
-                    return '0%';
+                if (value === 0 || value === '0') {
+                    return '0.00%';
                 }
                 if (!value) {
                     return isHtml ? SPACE : '';
                 }
-                return toDecimal(value) + '%';
+                return toFloat(toDecimal(value)) + '%';
             },
             toHtml(value) {
                 return formatters.percentage.to(value, true);
             },
         },
         integer: {
+            name: 'integer',
             from(value) {
                 return parseInt(toDecimal(value) || 0, 10);
             },
@@ -204,6 +236,7 @@
             },
         },
         number: {
+            name: 'number',
             from(value) {
                 return parseFloat(toDecimal(value) || 0);
             },
@@ -223,6 +256,7 @@
             },
         },
         phone: {
+            name: 'phone',
             from(value) {
                 return formatPhone(value);  
             },
@@ -237,6 +271,7 @@
             }
         },
         titleCase: {
+            name: 'titleCase',
             from(value){
                 return toTitleCase(value); 
             },
@@ -251,6 +286,7 @@
             }
         },
         zipcode: {
+            name: 'zipcode',
             from(value) {
                 return value;
             },
@@ -262,6 +298,36 @@
             },
             toHtml(value) {
                 return formatters.zipcode.to(value, true);
+            },
+        },
+        ssn: {
+            name: 'ssn',
+            from(value) {
+                return value;
+            },
+            to(value, isHtml) {
+                if (!value) {
+                    return isHtml ? SPACE : '';
+                }
+                return toSSN(value);  
+            },
+            toHtml(value) {
+                return formatters.ssn.to(value, true);
+            },
+        },
+        ein: {
+            name: 'ein',
+            from(value) {
+                return value;
+            },
+            to(value, isHtml) {
+                if (!value) {
+                    return isHtml ? SPACE : '';
+                }
+                return toEIN(value);  
+            },
+            toHtml(value) {
+                return formatters.ein.to(value, true);
             },
         },
         default: {

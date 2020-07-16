@@ -1,6 +1,6 @@
 {
   "name": "@clubajax/format",
-  "version": "0.5.13",
+  "version": "0.5.20",
   "description": "Format strings into different types",
   "main": "format.js",
   "repository": "https://github.com/clubajax/format.git",
