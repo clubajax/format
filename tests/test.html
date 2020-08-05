@@ -186,17 +186,21 @@
                     test(from, ' ', 0);
                 });
 
-                it('should format phone', () => {
+                it.only('should format phone', () => {
                     const toHtml = formatters.phone.toHtml;
+                    const to = formatters.phone.to;
                     const from = formatters.phone.from;
-                    expect(toHtml('1234567890')).to.equal('(123) 456-7890');
-                    expect(toHtml('123456789012')).to.equal('(123) 456-7890');
-                    // expect(toHtml('123456789')).to.equal('(123) 456-789');
-                    // expect(toHtml('aaa1234bbbb567890xxx')).to.equal('(123) 456-7890');
-                    expect(toHtml('12345678901234')).to.equal('(123) 456-7890 x1234');
+                    
+                    test(toHtml, '1234567890', '(123) 456-7890')
+                    test(toHtml, '123456789', '(123) 456-789')
+                    test(toHtml, '123456789012', '(123) 456-7890')
+                    test(toHtml, 'aaa1234bbbb567890xxx', '(123) 456-7890')
+                    test(toHtml, '12345678901234', '(123) 456-7890 x1234')
+                    test(to, '', '')
+                    
+                    test(from, '1234567890', '(123) 456-7890')
+                    test(from, '(123) 456-7890', '(123) 456-7890')
 
-                    // expect(from('1234567890')).to.equal('(123) 456-7890');
-                    // expect(from('(123) 456-7890')).to.equal('(123) 456-7890');
                 });
 
                 it('should format titleCase', () => {

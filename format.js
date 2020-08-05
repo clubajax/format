@@ -70,6 +70,10 @@
         return `(${n.substring(0, 3)}) ${n.substring(3, 6)}-${n.substring(6, 10)} x${n.substring(10)}`;
     }
 
+    function toDigits(value) {
+        return (toString(value).match(/\d/g) || []).join('');
+    }
+
     function toNumber(value) {
         return (toString(value).match(/\d/g) || []).join('');
     }
@@ -250,6 +254,25 @@
                 const isNeg = /^-/.test(value);
                 return toDecimal(value);
                 // return (isNeg ? '-' : '') + toDecimal(value);
+            },
+            toHtml(value) {
+                return formatters.number.to(value, true);
+            },
+        },
+        digits: {
+            name: 'digits',
+            from(value) {
+                return toNumber(value);
+            },
+            to(value, isHtml) {
+                if (value === 0) {
+                    return '';
+                }
+                if (!value) {
+                    return isHtml ? SPACE : '';
+                }
+                const isNeg = /^-/.test(value);
+                return toNumber(value);
             },
             toHtml(value) {
                 return formatters.number.to(value, true);
