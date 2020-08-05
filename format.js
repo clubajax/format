@@ -45,11 +45,12 @@
 
     function formatMoney(amount) {
         let str = toDecimal(amount.toString());
-        const neg = /^-/.test(str) ? '-' : '';
+        const isneg = /^-/.test(str);
         str = str.replace('-', '');
         const cents = /\./.test(str) ? formatCents(str.split('.')[1]) : '00';
         const dollars = split(str.split('.')[0], 3).join(',') || '0';
-        return `${neg}$${dollars}.${cents}`;
+        const returnValue = isneg ? `$(${dollars}.${cents})` : `$${dollars}.${cents}`;
+        return returnValue;
     }
 
     function formatCents(amount) {
@@ -164,7 +165,7 @@
         accounting: {
             name: 'accounting',
             from(value) {
-                const isNeg = /^\(/.test(value);
+                const isNeg = /^\$\(/.test(value);
                 return parseFloat(toDecimal(value) || 0) * (isNeg ? -1 : 1);
             },
             to(value, isHtml) {
@@ -175,9 +176,6 @@
                     return isHtml ? SPACE : '';
                 }
                 value = formatters.currency.toHtml(value);
-                if (/^-/.test(value)) {
-                    value = `(${value.replace('-', '')})`;
-                }
                 return value;
             },
             toHtml(value) {
@@ -187,7 +185,8 @@
         currency: {
             name: 'currency',
             from(value) {
-                return parseFloat(toDecimal(value) || 0);
+                const isNeg = /^\$\(/.test(value);
+                return parseFloat(toDecimal(value) || 0) * (isNeg ? -1 : 1);
             },
             to(value, isHtml) {
                 if (value === 0) {
@@ -196,7 +195,8 @@
                 if (!value) {
                     return isHtml ? SPACE : '';
                 }
-                return formatMoney(value).replace('$-', '-$');
+                return formatMoney(value);
+
             },
             toHtml(value) {
                 return formatters.currency.to(value, true);
@@ -281,7 +281,7 @@
         phone: {
             name: 'phone',
             from(value) {
-                return formatPhone(value);  
+                return formatPhone(value);
             },
             to(value, isHtml) {
                 if (!value) {
@@ -290,13 +290,13 @@
                 return formatPhone(value);
             },
             toHtml(value) {
-                return formatters.phone.to(value, true);   
+                return formatters.phone.to(value, true);
             }
         },
         titleCase: {
             name: 'titleCase',
             from(value){
-                return toTitleCase(value); 
+                return toTitleCase(value);
             },
             to(value, isHtml) {
                 if (!value) {
@@ -317,7 +317,7 @@
                 if (!value) {
                     return isHtml ? SPACE : '';
                 }
-                return toZipCode(value);  
+                return toZipCode(value);
             },
             toHtml(value) {
                 return formatters.zipcode.to(value, true);
@@ -361,7 +361,7 @@
                 if (!value) {
                     return isHtml ? SPACE : '';
                 }
-                return value;  
+                return value;
             },
             toHtml(value) {
                 return formatters.default.to(value, true);
