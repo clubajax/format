@@ -14,7 +14,6 @@
         root.formatters = factory();
     }
 })(this, function () {
-
     const SPACE = '&nbsp;';
 
     function split(str, chunkAmount) {
@@ -89,8 +88,12 @@
 
     function toFloat(value) {
         value = parseFloat(value);
-        value = Math.round(value * 100) * .01;
+        value = Math.round(value * 100) * 0.01;
         return value.toFixed(2);
+    }
+
+    function isUpperCase(value) {
+        return value.toUpperCase() === value;
     }
 
     function cap(value) {
@@ -98,35 +101,77 @@
         return `${value.substring(0, 1).toUpperCase()}${value.substring(1)}`;
     }
 
-    const words2 = 'ax, ex, ox, by, my, ok, ah, aw, eh, ha, he, hi, if, of, we, am, be, me, up, ad, do, go, an, ar, as, at, et, in, is, it, lo, no, on, so, to, us'.split(', ');
-    const words3 = [
-        'a', 'for', 'the', 'and', 'nor', 'but', 'yet'
-    ];
+    const words2 = 'in, ax, ex, ox, by, my, ok, ah, aw, eh, ha, he, hi, if, of, we, am, be, me, up, ad, do, go, an, ar, as, at, et, in, is, it, lo, no, on, so, to, us'.split(
+        ', ',
+    );
+    const words3 = ['a', 'for', 'the', 'and', 'nor', 'but', 'yet'];
     const specWord = {
-        'po': 1,
+        po: 1,
         'po.': 1,
-        'p.o.': 1
+        'p.o.': 1,
     };
     function isAbbr(word) {
-        return !/[aeiou]/.test(word);
+        return !/[aeiouy]/.test(word) && word !== 'inc';
+    }
+
+    function isState(word) {
+        word = word.trim();
+        if (word.length > 3) {
+            return false;
+        }
+        const str = word.match(/\w*/g);
+        if (str) {
+            word = str[0];
+        }
+        return states.includes(word.toUpperCase());
     }
 
     function toTitleCase(value) {
-        return toString(value).toLowerCase().split(' ').map((word, i) => {
-            if (specWord[word] || isAbbr(word)) {
-                return word.toUpperCase();
-            }
-            if (i === 0) {
+        let words = toString(value);
+
+        words = words
+            .toLowerCase()
+            .split(' ')
+            .map((word, i) => {
+                if (specWord[word] || isAbbr(word) || isState(word)) {
+                    return word.toUpperCase();
+                }
+
+                if (i === 0) {
+                    return cap(word);
+                }
+
+                if (words2.includes(word) || words3.includes(word)) {
+                    return word;
+                }
                 return cap(word);
-            }
-            if (words2.includes(word) || words3.includes(word)) {
+            })
+            .join(' ');
+
+        words = words.replace(/([\/,;-]|\.)\w/g, (word) => {
+            // not actually a word, it is punctuation followed by a letter
+            return word.substring(0, 1) + word.substring(1, 2).toUpperCase();
+        });
+
+        words = words.replace(/\W\w{1,3}\W/g, (word) => {
+            if (words2.includes(word.trim()) || words3.includes(word.trim())) {
                 return word;
             }
+            return word.toUpperCase();
+        });
+        words = words.replace(/\W\w{1,3}$/g, (word) => {
+            if (words2.includes(word.trim()) || words3.includes(word.trim())) {
+                return word;
+            }
+            return word.toUpperCase();
+        });
 
-            // less than three uppercase?
+        words = words.replace('INC', 'Inc');
+        words = words.replace("'S", "'s");
+        words = words.replace("-IN", "-In");
+        words = words.replace("IN-", "In-");
 
-            return cap(word);
-        }).join(' ');
+        return words;
     }
 
     function toZipCode(value) {
@@ -160,6 +205,17 @@
         return value.toString().trim();
     }
 
+    function handleOptions(value, options) { 
+        let val = parseFloat(value);
+        if (options.min && val < options.min) {
+            return options.min;
+        }
+        if (options.max && val > options.max) {
+            return options.max;
+        }
+        return value;
+    }
+
     const formatters = {
         accounting: {
             name: 'accounting',
@@ -167,7 +223,8 @@
                 const isNeg = /^\(/.test(value);
                 return parseFloat(toDecimal(value) || 0) * (isNeg ? -1 : 1);
             },
-            to(value, isHtml) {
+            to(value, isHtml, options = {}) {
+                value = handleOptions(value, options);
                 if (value === 0) {
                     return '$0.00';
                 }
@@ -180,8 +237,8 @@
                 }
                 return value;
             },
-            toHtml(value) {
-                return formatters.accounting.to(value, true);
+            toHtml(value, options) {
+                return formatters.accounting.to(value, true, options);
             },
         },
         currency: {
@@ -189,7 +246,8 @@
             from(value) {
                 return parseFloat(toDecimal(value) || 0);
             },
-            to(value, isHtml) {
+            to(value, isHtml, options = {}) {
+                value = handleOptions(value, options);
                 if (value === 0) {
                     return '$0.00';
                 }
@@ -198,8 +256,8 @@
                 }
                 return formatMoney(value).replace('$-', '-$');
             },
-            toHtml(value) {
-                return formatters.currency.to(value, true);
+            toHtml(value, options) {
+                return formatters.currency.to(value, true, options);
             },
         },
         percentage: {
@@ -207,7 +265,8 @@
             from(value) {
                 return parseFloat(toDecimal(value) || 0);
             },
-            to(value, isHtml) {
+            to(value, isHtml, options = {}) {
+                value = handleOptions(value, options);
                 if (value === 0 || value === '0') {
                     return '0.00%';
                 }
@@ -216,8 +275,8 @@
                 }
                 return toFloat(toDecimal(value)) + '%';
             },
-            toHtml(value) {
-                return formatters.percentage.to(value, true);
+            toHtml(value, options) {
+                return formatters.percentage.to(value, true, options);
             },
         },
         integer: {
@@ -225,7 +284,8 @@
             from(value) {
                 return parseInt(toDecimal(value) || 0, 10);
             },
-            to(value, isHtml) {
+            to(value, isHtml, options = {}) {
+                value = handleOptions(value, options);
                 if (value === 0) {
                     return '0';
                 }
@@ -233,10 +293,11 @@
                     return isHtml ? SPACE : '';
                 }
                 const isNeg = /^-/.test(value);
-                return (isNeg ? '-' : '') + toString(value).split('.')[0].replace(/\D/g, '');
+                value = (isNeg ? '-' : '') + toString(value).split('.')[0].replace(/\D/g, '');
+                return value;
             },
-            toHtml(value) {
-                return formatters.integer.to(value, true);
+            toHtml(value, options) {
+                return formatters.integer.to(value, true, options);
             },
         },
         number: {
@@ -244,7 +305,8 @@
             from(value) {
                 return parseFloat(toDecimal(value) || 0);
             },
-            to(value, isHtml) {
+            to(value, isHtml, options = {}) {
+                value = handleOptions(value, options);
                 if (value === 0) {
                     return '0';
                 }
@@ -255,8 +317,8 @@
                 return toDecimal(value);
                 // return (isNeg ? '-' : '') + toDecimal(value);
             },
-            toHtml(value) {
-                return formatters.number.to(value, true);
+            toHtml(value, options) {
+                return formatters.number.to(value, true, options);
             },
         },
         digits: {
@@ -281,7 +343,7 @@
         phone: {
             name: 'phone',
             from(value) {
-                return formatPhone(value);  
+                return formatPhone(value);
             },
             to(value, isHtml) {
                 if (!value) {
@@ -290,13 +352,13 @@
                 return formatPhone(value);
             },
             toHtml(value) {
-                return formatters.phone.to(value, true);   
-            }
+                return formatters.phone.to(value, true);
+            },
         },
         titleCase: {
             name: 'titleCase',
-            from(value){
-                return toTitleCase(value); 
+            from(value) {
+                return toTitleCase(value);
             },
             to(value, isHtml) {
                 if (!value) {
@@ -306,7 +368,25 @@
             },
             toHtml(value) {
                 return formatters.titleCase.to(value, true);
-            }
+            },
+        },
+        upperToTitleCase: {
+            name: 'titleCase',
+            from(value) {
+                return value;
+            },
+            to(value, isHtml) {
+                if (!value) {
+                    return isHtml ? SPACE : '';
+                }
+                if (!isUpperCase(value)) {
+                    return value;
+                }
+                return toTitleCase(value);
+            },
+            toHtml(value) {
+                return formatters.titleCase.to(value, true);
+            },
         },
         zipcode: {
             name: 'zipcode',
@@ -317,7 +397,7 @@
                 if (!value) {
                     return isHtml ? SPACE : '';
                 }
-                return toZipCode(value);  
+                return toZipCode(value);
             },
             toHtml(value) {
                 return formatters.zipcode.to(value, true);
@@ -332,7 +412,7 @@
                 if (!value) {
                     return isHtml ? SPACE : '';
                 }
-                return toSSN(value);  
+                return toSSN(value);
             },
             toHtml(value) {
                 return formatters.ssn.to(value, true);
@@ -347,7 +427,7 @@
                 if (!value) {
                     return isHtml ? SPACE : '';
                 }
-                return toEIN(value);  
+                return toEIN(value);
             },
             toHtml(value) {
                 return formatters.ein.to(value, true);
@@ -361,13 +441,75 @@
                 if (!value) {
                     return isHtml ? SPACE : '';
                 }
-                return value;  
+                return value;
             },
             toHtml(value) {
                 return formatters.default.to(value, true);
             },
         },
     };
+
+    const states = [
+        'AL',
+        'AK',
+        'AS',
+        'AZ',
+        'AR',
+        'CA',
+        'CO',
+        'CT',
+        'DE',
+        'DC',
+        'FM',
+        'FL',
+        'GA',
+        'GU',
+        'HI',
+        'ID',
+        'IL',
+        'IN',
+        'IA',
+        'KS',
+        'KY',
+        'LA',
+        'ME',
+        'MH',
+        'MD',
+        'MA',
+        'MI',
+        'MN',
+        'MS',
+        'MO',
+        'MT',
+        'NE',
+        'NV',
+        'NH',
+        'NJ',
+        'NM',
+        'NY',
+        'NC',
+        'ND',
+        'MP',
+        'OH',
+        'OK',
+        'OR',
+        'PW',
+        'PA',
+        'PR',
+        'RI',
+        'SC',
+        'SD',
+        'TN',
+        'TX',
+        'UT',
+        'VT',
+        'VI',
+        'VA',
+        'WA',
+        'WV',
+        'WI',
+        'WY',
+    ];
 
     return formatters;
 });

@@ -37,13 +37,13 @@
                 expect = chai.expect,
                 formatters = window.formatters;
 
-            function test(format, input, output) {
-                const value = format(input);
+            function test(format, input, output, options) {
+                const value = format(input, options);
                 console.log(value, typeof value);
                 expect(value).to.equal(output);
             }
 
-            describe('formatters', () => {
+            describe.only('numbers', () => {
                 it('should format integers', () => {
                     const toHtml = formatters.integer.toHtml;
                     const from = formatters.integer.from;
@@ -104,7 +104,7 @@
                     test(toHtml, '001', '1.00%');
                     test(toHtml, 'a1', '1.00%');
                     test(toHtml, '1.1', '1.10%');
-                    test(toHtml,'1.0', '1.00%');
+                    test(toHtml, '1.0', '1.00%');
                     test(toHtml, '1.00', '1.00%');
                     test(toHtml, '1.000', '1.00%');
                     test(toHtml, '-1.0', '-1.00%');
@@ -186,18 +186,51 @@
                     test(from, ' ', 0);
                 });
 
-                it.only('should format phone', () => {
+                it('should handle integer min-max', () => {
+                    const toHtml = formatters.integer.toHtml;
+                    test(toHtml, '0', '2', {min: 2});
+                    test(toHtml, '4', '2', {max: 2});
+                });
+
+                it('should handle percentages min-max', () => {
+                    const toHtml = formatters.percentage.toHtml;
+                    test(toHtml, '0', '2.00%', {min: 2});
+                    test(toHtml, '4', '2.00%', {max: 2});
+                });
+
+                it('should handle numbers min-max', () => {
+                    const toHtml = formatters.number.toHtml;
+                    test(toHtml, '0', '2', {min: 2});
+                    test(toHtml, '4', '2', {max: 2});
+                });
+
+                it('should handle currency min-max', () => {
+                    const toHtml = formatters.currency.toHtml;
+                    test(toHtml, '0', '$2.00', {min: 2});
+                    test(toHtml, '4', '$2.00', {max: 2});
+                });
+
+                it.only('should handle accounting min-max', () => {
+                    const toHtml = formatters.accounting.toHtml;
+                    test(toHtml, '0', '$2.00', {min: 2});
+                    test(toHtml, '4', '$2.00', {max: 2});
+                    test(toHtml, '-5', '($2.00)', {min: -2});
+                    test(toHtml, '4', '($2.00)', {max: -2});
+                });
+            });
+            describe('strings', () => {
+                it('should format phone', () => {
                     const toHtml = formatters.phone.toHtml;
                     const to = formatters.phone.to;
                     const from = formatters.phone.from;
-                    
+
                     test(toHtml, '1234567890', '(123) 456-7890')
                     test(toHtml, '123456789', '(123) 456-789')
                     test(toHtml, '123456789012', '(123) 456-7890')
                     test(toHtml, 'aaa1234bbbb567890xxx', '(123) 456-7890')
                     test(toHtml, '12345678901234', '(123) 456-7890 x1234')
                     test(to, '', '')
-                    
+
                     test(from, '1234567890', '(123) 456-7890')
                     test(from, '(123) 456-7890', '(123) 456-7890')
 
@@ -218,6 +251,29 @@
 
 
                     // console.log(toHtml('mike is going downtown'));
+                });
+
+                it('should format titleCase - special cases', () => {
+                    const toHtml = formatters.titleCase.toHtml;
+                    const from = formatters.titleCase.from;
+
+                    test(toHtml, 'Jani-king of Ca, Inc. Lax/col', 'Jani-King of CA, Inc. LAX/COL');
+                    test(toHtml, 'Anita Alvord D/b/a Ama Ent.', 'Anita Alvord D/B/A Ama ENT.');
+                    test(toHtml, 'In-house - Franklin Bank', 'In-House - Franklin Bank');
+                    test(toHtml, "mike's apple-jack ceo", "Mike's Apple-Jack CEO");
+                    test(toHtml, "Buffalo-in house", "Buffalo-In House");
+                    test(toHtml, "Buffalo in-house", "Buffalo In-House");
+                    test(toHtml, "in-house", "In-House");
+                });
+
+                it('should format upperToTitleCase - special cases', () => {
+                    const toHtml = formatters.upperToTitleCase.toHtml;
+                    const from = formatters.upperToTitleCase.from;
+
+                    test(toHtml, 'MIKE WILCOX', 'Mike Wilcox');
+                    test(toHtml, 'mike wilcox', 'Mike Wilcox');
+
+
                 });
 
                 it('should format zipcode', () => {
