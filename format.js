@@ -52,10 +52,14 @@
     }
 
     function formatCents(amount) {
-        let amt = parseFloat(`0.${amount}`);
-        // 0.009
-        amt = Math.round(amt * 100);
-        return amt > 9 ? `${amt}` : `0${amt}`;
+        if (config.accounting.round) {
+            let amt = parseFloat(`0.${amount}`);
+            // 0.009
+            amt = Math.round(amt * 100);
+            return amt > 9 ? `${amt}` : `0${amt}`;
+        }
+        const str = (amount || 0).toString().substring(0, 2);
+        return !str.length ? '00' : str.length === 1 ? `${str}0` : str;
     }
 
     function formatPhone(value) {
@@ -101,22 +105,39 @@
         return `${value.substring(0, 1).toUpperCase()}${value.substring(1)}`;
     }
 
-    const words2 = 'in, ax, ex, ox, by, my, ok, ah, aw, eh, ha, he, hi, if, of, we, am, be, me, up, ad, do, go, an, ar, as, at, et, in, is, it, lo, no, on, so, to, us'.split(
-        ', ',
-    );
+    const config = {
+        capped: [],
+        lower: [],
+        upper: [],
+        accounting: {},
+    };
+
+    const words2 =
+        'in, ax, ex, ox, by, my, ok, ah, aw, eh, ha, he, hi, if, of, we, am, be, me, up, ad, do, go, an, ar, as, at, et, in, is, it, lo, no, on, so, to, us'.split(
+            ', ',
+        );
     const words3 = ['a', 'for', 'the', 'and', 'nor', 'but', 'yet'];
     const specWord = {
         po: 1,
         'po.': 1,
         'p.o.': 1,
     };
+
+    const vowelRegex = /[aeiou]/;
+    const consonantRegex = /(?![aeiou])[a-z]/;
     function isAbbr(word) {
-        return !/[aeiouy]/.test(word) && word !== 'inc';
+        if (!vowelRegex.test(word)) {
+            return true;
+        }
+        if (!consonantRegex.test(word)) {
+            return true;
+        }
+        return false;
     }
 
     function isState(word) {
         word = word.trim();
-        if (word.length > 3) {
+        if (word.length > 2) {
             return false;
         }
         const str = word.match(/\w*/g);
@@ -129,47 +150,32 @@
     function toTitleCase(value) {
         let words = toString(value);
 
-        words = words
-            .toLowerCase()
-            .split(' ')
-            .map((word, i) => {
-                if (specWord[word] || isAbbr(word) || isState(word)) {
-                    return word.toUpperCase();
-                }
-
-                if (i === 0) {
-                    return cap(word);
-                }
-
-                if (words2.includes(word) || words3.includes(word)) {
-                    return word;
-                }
+        function transform(word, i) {
+            if (config.capped.includes(word)) {
                 return cap(word);
-            })
-            .join(' ');
+            }
+            if (config.upper.includes(word) || specWord[word] || isAbbr(word) || isState(word)) {
+                return word.toUpperCase();
+            }
 
-        words = words.replace(/([\/,;-]|\.)\w/g, (word) => {
-            // not actually a word, it is punctuation followed by a letter
-            return word.substring(0, 1) + word.substring(1, 2).toUpperCase();
-        });
+            if (i === 0) {
+                return cap(word);
+            }
 
-        words = words.replace(/\W\w{1,3}\W/g, (word) => {
-            if (words2.includes(word.trim()) || words3.includes(word.trim())) {
+            if (config.lower.includes(word) || words2.includes(word) || words3.includes(word)) {
                 return word;
             }
-            return word.toUpperCase();
-        });
-        words = words.replace(/\W\w{1,3}$/g, (word) => {
-            if (words2.includes(word.trim()) || words3.includes(word.trim())) {
-                return word;
-            }
-            return word.toUpperCase();
+            return cap(word);
+        }
+
+        const reg = /\w+/g;
+        words = words.toLowerCase().replace(reg, (word, i) => {
+            return transform(word, i);
         });
 
-        words = words.replace('INC', 'Inc');
         words = words.replace("'S", "'s");
-        words = words.replace("-IN", "-In");
-        words = words.replace("IN-", "In-");
+        words = words.replace('-IN', '-In');
+        words = words.replace('IN-', 'In-');
 
         return words;
     }
@@ -205,7 +211,7 @@
         return value.toString().trim();
     }
 
-    function handleOptions(value, options) { 
+    function handleOptions(value, options) {
         let val = parseFloat(value);
         if (options.min && val < options.min) {
             return options.min;
@@ -217,6 +223,20 @@
     }
 
     const formatters = {
+        config(options = {}) {
+            if (options.upper) {
+                config.upper = options.upper;
+            }
+            if (options.lower) {
+                config.lower = options.lower;
+            }
+            if (options.capped) {
+                config.capped = options.capped;
+            }
+            if (options.accounting) {
+                config.accounting = options.accounting;
+            }
+        },
         accounting: {
             name: 'accounting',
             from(value) {

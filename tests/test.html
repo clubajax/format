@@ -31,6 +31,11 @@
         window.mocha.setup('bdd');
         window.mocha.options.allowUncaught = true;
 
+        formatters.config({
+            capped: ['inc', 'ft', 'new', 'air', 'llc'],
+            upper: ['abc', 'amd', 'acc', 'gyn', 'lax', 'col', 'ent', 'ceo', 'cfo', 'cto']
+        });
+
         describe('format', function () {
             this.timeout(3000);
             const describe = window.describe,
@@ -43,7 +48,7 @@
                 expect(value).to.equal(output);
             }
 
-            describe.only('numbers', () => {
+            describe('numbers', () => {
                 it('should format integers', () => {
                     const toHtml = formatters.integer.toHtml;
                     const from = formatters.integer.from;
@@ -155,6 +160,21 @@
                     test(from, ' ', 0);
                 });
 
+                it.only('should format accounting, rounding', () => {
+                    const toHtml = formatters.accounting.toHtml;
+                    const from = formatters.accounting.from;
+                    // test(toHtml, '0.01', '$0.01');
+                    // test(toHtml, '0.015', '$0.01');
+                    // test(toHtml, '0.715', '$0.71');
+                    formatters.config({
+                        accounting:{
+                            round: true
+                        }
+                    });
+                    test(toHtml, '0.015', '$0.02');
+                    test(toHtml, '0.715', '$0.72');
+                });
+
                 it('should format accounting', () => {
                     const toHtml = formatters.accounting.toHtml;
                     const from = formatters.accounting.from;
@@ -210,7 +230,7 @@
                     test(toHtml, '4', '$2.00', {max: 2});
                 });
 
-                it.only('should handle accounting min-max', () => {
+                it('should handle accounting min-max', () => {
                     const toHtml = formatters.accounting.toHtml;
                     test(toHtml, '0', '$2.00', {min: 2});
                     test(toHtml, '4', '$2.00', {max: 2});
@@ -257,6 +277,9 @@
                     const toHtml = formatters.titleCase.toHtml;
                     const from = formatters.titleCase.from;
 
+                    // test no vowels and no consonants:
+                    // test(toHtml, 'aaa bbb', 'AAA BBB');
+
                     test(toHtml, 'Jani-king of Ca, Inc. Lax/col', 'Jani-King of CA, Inc. LAX/COL');
                     test(toHtml, 'Anita Alvord D/b/a Ama Ent.', 'Anita Alvord D/B/A Ama ENT.');
                     test(toHtml, 'In-house - Franklin Bank', 'In-House - Franklin Bank');
@@ -272,6 +295,11 @@
 
                     test(toHtml, 'MIKE WILCOX', 'Mike Wilcox');
                     test(toHtml, 'mike wilcox', 'Mike Wilcox');
+                    
+                    // these use config:
+                    test(toHtml, 'NEW YORK', 'New York')
+                    test(toHtml, 'WILLIAMSVILLE New York', 'Williamsville New York')
+                    test(toHtml, 'FT WORTH TEXAS', 'Ft Worth Texas')
 
 
                 });
