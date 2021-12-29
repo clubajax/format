@@ -93,6 +93,7 @@
     }
 
     function isUpperCase(value) {
+        value = toString(value);
         return value.toUpperCase() === value;
     }
 
@@ -101,9 +102,10 @@
         return `${value.substring(0, 1).toUpperCase()}${value.substring(1)}`;
     }
 
-    const words2 = 'in, ax, ex, ox, by, my, ok, ah, aw, eh, ha, he, hi, if, of, we, am, be, me, up, ad, do, go, an, ar, as, at, et, in, is, it, lo, no, on, so, to, us'.split(
-        ', ',
-    );
+    const words2 =
+        'in, ax, ex, ox, by, my, ok, ah, aw, eh, ha, he, hi, if, of, we, am, be, me, up, ad, do, go, an, ar, as, at, et, in, is, it, lo, no, on, so, to, us'.split(
+            ', ',
+        );
     const words3 = ['a', 'for', 'the', 'and', 'nor', 'but', 'yet'];
     const specWord = {
         po: 1,
@@ -168,8 +170,8 @@
 
         words = words.replace('INC', 'Inc');
         words = words.replace("'S", "'s");
-        words = words.replace("-IN", "-In");
-        words = words.replace("IN-", "In-");
+        words = words.replace('-IN', '-In');
+        words = words.replace('IN-', 'In-');
 
         return words;
     }
@@ -205,7 +207,7 @@
         return value.toString().trim();
     }
 
-    function handleOptions(value, options) { 
+    function handleOptions(value, options) {
         let val = parseFloat(value);
         if (options.min && val < options.min) {
             return options.min;
