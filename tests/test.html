@@ -18,6 +18,7 @@
             padding: 20px;
             font-family: sans-serif;
         }
+
     </style>
 </head>
 
@@ -160,14 +161,14 @@
                     test(from, ' ', 0);
                 });
 
-                it.only('should format accounting, rounding', () => {
+                it('should format accounting, rounding', () => {
                     const toHtml = formatters.accounting.toHtml;
                     const from = formatters.accounting.from;
                     // test(toHtml, '0.01', '$0.01');
                     // test(toHtml, '0.015', '$0.01');
                     // test(toHtml, '0.715', '$0.71');
                     formatters.config({
-                        accounting:{
+                        accounting: {
                             round: true
                         }
                     });
@@ -204,6 +205,13 @@
 
                     test(from, '', 0);
                     test(from, ' ', 0);
+                });
+
+                it.only('should format accounting - forced negative', () => {
+                    const toHtml = formatters.accountingNeg.toHtml;
+                    test(toHtml, '1', '($1.00)');
+                    test(toHtml, '-1', '($1.00)');
+                    test(toHtml, '0', '$0.00');
                 });
 
                 it('should handle integer min-max', () => {
@@ -244,15 +252,15 @@
                     const to = formatters.phone.to;
                     const from = formatters.phone.from;
 
-                    test(toHtml, '1234567890', '(123) 456-7890')
-                    test(toHtml, '123456789', '(123) 456-789')
-                    test(toHtml, '123456789012', '(123) 456-7890')
-                    test(toHtml, 'aaa1234bbbb567890xxx', '(123) 456-7890')
-                    test(toHtml, '12345678901234', '(123) 456-7890 x1234')
-                    test(to, '', '')
+                    test(toHtml, '1234567890', '(123) 456-7890');
+                    test(toHtml, '123456789', '(123) 456-789');
+                    test(toHtml, '123456789012', '(123) 456-7890');
+                    test(toHtml, 'aaa1234bbbb567890xxx', '(123) 456-7890');
+                    test(toHtml, '12345678901234', '(123) 456-7890 x1234');
+                    test(to, '', '');
 
-                    test(from, '1234567890', '(123) 456-7890')
-                    test(from, '(123) 456-7890', '(123) 456-7890')
+                    test(from, '1234567890', '(123) 456-7890');
+                    test(from, '(123) 456-7890', '(123) 456-7890');
 
                 });
 
@@ -295,11 +303,11 @@
 
                     test(toHtml, 'MIKE WILCOX', 'Mike Wilcox');
                     test(toHtml, 'mike wilcox', 'Mike Wilcox');
-                    
+
                     // these use config:
-                    test(toHtml, 'NEW YORK', 'New York')
-                    test(toHtml, 'WILLIAMSVILLE New York', 'Williamsville New York')
-                    test(toHtml, 'FT WORTH TEXAS', 'Ft Worth Texas')
+                    test(toHtml, 'NEW YORK', 'New York');
+                    test(toHtml, 'WILLIAMSVILLE New York', 'Williamsville New York');
+                    test(toHtml, 'FT WORTH TEXAS', 'Ft Worth Texas');
 
 
                 });
@@ -319,14 +327,14 @@
                     const toHtml = formatters.ssn.toHtml;
                     const from = formatters.ssn.from;
                     test(toHtml, '111223333', '111-22-3333');
-                    test(from, '111-22-3333', '111-22-3333')
+                    test(from, '111-22-3333', '111-22-3333');
                 });
 
                 it('should format ein', () => {
                     const toHtml = formatters.ein.toHtml;
                     const from = formatters.ein.from;
                     test(toHtml, '112222233', '11-2222233');
-                    test(from, '11-2222233', '11-2222233')
+                    test(from, '11-2222233', '11-2222233');
                 });
             });
         });

@@ -214,13 +214,16 @@
 
     function handleOptions(value, options) {
         let val = parseFloat(value);
+        if (options.negative) {
+            val = val <= 0 ? val : val * -1;
+        }
         if (options.min && val < options.min) {
             return options.min;
         }
         if (options.max && val > options.max) {
             return options.max;
         }
-        return value;
+        return val;
     }
 
     const formatters = {
@@ -259,6 +262,22 @@
                 return value;
             },
             toHtml(value, options) {
+                return formatters.accounting.to(value, true, options);
+            },
+        },
+        accountingNeg: {
+            name: 'accountingNeg',
+            from(value) {
+                console.error(
+                    '`accountingNeg` can only be written, not read (because it is undetermined if the original value was negative or not)',
+                );
+            },
+            to(value, isHtml) {
+                formatters.accounting.to(value, isHtml, { negative: true });
+            },
+            toHtml(value, options = {}) {
+                options.negative = true;
+                console.log('TO:::');
                 return formatters.accounting.to(value, true, options);
             },
         },
