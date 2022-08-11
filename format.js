@@ -277,7 +277,6 @@
             },
             toHtml(value, options = {}) {
                 options.negative = true;
-                console.log('TO:::');
                 return formatters.accounting.to(value, true, options);
             },
         },
