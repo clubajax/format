@@ -73,10 +73,6 @@
         return `(${n.substring(0, 3)}) ${n.substring(3, 6)}-${n.substring(6, 10)} x${n.substring(10)}`;
     }
 
-    function toDigits(value) {
-        return (toString(value).match(/\d/g) || []).join('');
-    }
-
     function toNumber(value) {
         return (toString(value).match(/\d/g) || []).join('');
     }
@@ -267,7 +263,7 @@
         },
         accountingNeg: {
             name: 'accountingNeg',
-            from(value) {
+            from() {
                 console.error(
                     '`accountingNeg` can only be written, not read (because it is undetermined if the original value was negative or not)',
                 );
@@ -312,7 +308,7 @@
                 if (!value) {
                     return isHtml ? SPACE : '';
                 }
-                return toFloat(toDecimal(value)) + '%';
+                return `${toFloat(toDecimal(value))}%`;
             },
             toHtml(value, options) {
                 return formatters.percentage.to(value, true, options);
@@ -352,9 +348,7 @@
                 if (!value) {
                     return isHtml ? SPACE : '';
                 }
-                const isNeg = /^-/.test(value);
                 return toDecimal(value);
-                // return (isNeg ? '-' : '') + toDecimal(value);
             },
             toHtml(value, options) {
                 return formatters.number.to(value, true, options);
@@ -372,7 +366,6 @@
                 if (!value) {
                     return isHtml ? SPACE : '';
                 }
-                const isNeg = /^-/.test(value);
                 return toNumber(value);
             },
             toHtml(value) {
