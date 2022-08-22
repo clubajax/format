@@ -1,23 +1,23 @@
 {
-    "name": "@clubajax/format",
-    "version": "0.5.41",
-    "description": "Format strings into different types",
-    "main": "format.js",
-    "repository": "https://github.com/clubajax/format.git",
-    "author": "Mike Wilcox <anm9tr@gmail.com>",
-    "license": "MIT",
-    "scripts": {
-        "start": "http-server",
-        "test": "mocha -w test/helpers/browser.js test/*.spec.js",
-        "build": "node ./scripts/deploy.js",
-        "jk-build": "node ./scripts/deploy.js --jk"
-    },
-    "dependencies": {},
-    "devDependencies": {
-        "fs-extra": "^9.0.0",
-        "@clubajax/node-file-managment": "^0.1.4",
-        "http-server": "^14.1.1",
-        "chai": "^4.2.0",
-        "mocha": "^7.1.2"
-    }
+  "name": "@clubajax/format",
+  "version": "0.5.42",
+  "description": "Format strings into different types",
+  "main": "format.js",
+  "repository": "https://github.com/clubajax/format.git",
+  "author": "Mike Wilcox <anm9tr@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "http-server",
+    "test": "mocha -w test/helpers/browser.js test/*.spec.js",
+    "build": "node ./scripts/deploy.js",
+    "jk": "node ./scripts/deploy.js --jk"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "fs-extra": "^9.0.0",
+    "@clubajax/node-file-managment": "^0.1.7",
+    "http-server": "^14.1.1",
+    "chai": "^4.2.0",
+    "mocha": "^7.1.2"
+  }
 }
